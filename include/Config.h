@@ -6,4 +6,9 @@ typedef struct {
   char* address;
 } Config;
 
+typedef struct {
+  char* ssid;
+  char* password;
+} WifiConfig;
+
 #endif
