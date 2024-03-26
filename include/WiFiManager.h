@@ -1,6 +1,8 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
-void setupWiFi();
+#include "Config.h"
+
+void setupWiFi(WifiConfig wifi_config);
 
 #endif
