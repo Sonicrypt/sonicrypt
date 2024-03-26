@@ -1,5 +1,6 @@
 #include <ArduinoWebsockets.h>
 #include "WebSocketClient.h"
+#include "Notify.h"
 
 using namespace websockets;
 
@@ -85,10 +86,12 @@ void parseTx(String json) {
         finalizeTx();
     } else if(subId == confirmSub) {
         Serial.println("Confirmed transaction");
+        notifyConfirmation();
     }
 }
 
 void initWebSocket() {
+    notifyConfirmation();
     Serial.println("Initializing WebSocket...");
     
     client.onEvent(onEventsCallback);
@@ -143,6 +146,7 @@ void finalizeTx() {
     if(err) {
         Serial.print("Error parsing JSON: ");
         Serial.println(err.c_str());
+        notifyError();
         return;
     }
 
@@ -163,6 +167,7 @@ void finalizeTx() {
 
     if (httpCode <= 0) {
         Serial.println("Error on HTTP request");
+        notifyError();
         return;
     }
 
@@ -173,6 +178,7 @@ void finalizeTx() {
     if(err) {
         Serial.print("Error parsing JSON: ");
         Serial.println(err.c_str());
+        notifyError();
         return;
     }
 
@@ -186,9 +192,11 @@ void finalizeTx() {
 
     if (sender == address) {
         Serial.println("You've sent a transaction");
+        notifyConfirmation();
         return;
     } else if (receiver == address) {
         Serial.println("You've received a transaction");
+        notifyFinalization();
         return;
     } else {
         Serial.println("You're not involved in this transaction");
