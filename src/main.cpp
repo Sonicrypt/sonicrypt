@@ -2,6 +2,9 @@
 #include "WiFiManager.h"
 #include "WebSocketClient.h"
 #include "Notify.h"
+#include "Config.h"
+
+Config config;
 
 void setup() {
   Serial.begin(115200);
@@ -11,7 +14,11 @@ void setup() {
   pinMode(ERROR_LED_PIN, OUTPUT);
 
   setupWiFi();
-  initWebSocket();
+
+  config.address = "7LwsCzvPoJJD8d15yiH9D411RPpQJTb3QTePR7HgBQKH";
+  config.net = "devnet";
+
+  initWebSocket(config);
 }
 
 void loop() {
