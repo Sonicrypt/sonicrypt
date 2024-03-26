@@ -4,15 +4,40 @@
 
 using namespace websockets;
 
-const char* wsEndpoint = "api.devnet.solana.com";
+char* wsEndpoint;
+char* net;
+char* address;
 const char* wsPath = "/";
 const int wsPort = 80;
-const char* address = "7LwsCzvPoJJD8d15yiH9D411RPpQJTb3QTePR7HgBQKH";
 int finalizeSub;
 int confirmSub;
 
 WebsocketsClient client;
 HTTPClient http;
+
+char* getWsEndpoint(char* net) {
+    if (strcmp(net, "devnet") == 0) {
+        return "api.devnet.solana.com";
+    } else if (strcmp(net, "testnet") == 0) {
+        return "api.testnet.solana.com";
+    } else if (strcmp(net, "mainnet") == 0) {
+        return "api.mainnet-beta.solana.com";
+    } else {
+        return "api.devnet.solana.com";
+    }
+}
+
+char* getHttpEndpoint(char* net) {
+    if (strcmp(net, "devnet") == 0) {
+        return "http://api.devnet.solana.com";
+    } else if (strcmp(net, "testnet") == 0) {
+        return "http://api.testnet.solana.com";
+    } else if (strcmp(net, "mainnet") == 0) {
+        return "http://api.mainnet-beta.solana.com";
+    } else {
+        return "http://api.devnet.solana.com";
+    }
+}
 
 void finalizeTx();
 
@@ -90,8 +115,16 @@ void parseTx(String json) {
     }
 }
 
-void initWebSocket() {
+void initWebSocket(Config config) {
+    wsEndpoint = getWsEndpoint(config.net);
+    address = config.address;
+    net = config.net;
+
     notifyConfirmation();
+    connect();
+}
+
+void connect() {
     Serial.println("Initializing WebSocket...");
     
     client.onEvent(onEventsCallback);
@@ -122,13 +155,15 @@ void handleWebSocket() {
     if(!client.available()) {
         delay(1000);
         Serial.println("Reconnecting...");
-        initWebSocket();
+        connect();
     }
 }
 
 void finalizeTx() {
     JsonDocument doc;
-    http.begin("http://api.devnet.solana.com");
+    const char* endPoint = getHttpEndpoint(net);
+
+    http.begin(endPoint);
     http.addHeader("Content-Type", "application/json");
     String body = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getConfirmedSignaturesForAddress2\",\"params\":[\"" + String(address) + "\",{\"limit\":1}]}";
 
@@ -159,7 +194,7 @@ void finalizeTx() {
     Serial.print("Signature: ");
     Serial.println(signature);
 
-    http.begin("http://api.devnet.solana.com");
+    http.begin(endPoint);
     http.addHeader("Content-Type", "application/json");
     body = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTransaction\",\"params\":[\"" + signature + "\"]}";
     httpCode = http.POST(body);
