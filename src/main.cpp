@@ -1,31 +1,73 @@
+#include <vector>
 #include <Arduino.h>
 #include "WiFiManager.h"
 #include "WebSocketClient.h"
 #include "Notify.h"
 #include "Config.h"
+#include "KVStore.h"
+#include "BLEManager.h"
 
 Config config;
 WifiConfig wifi_config;
+std::vector<std::string> configKeys = {"ssid", "password", "net", "address"};
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
+  initKVStore();
 
   pinMode(CONFIRM_LED_PIN, OUTPUT);
   pinMode(FINALIZE_LED_PIN, OUTPUT);
   pinMode(ERROR_LED_PIN, OUTPUT);
 
-  wifi_config.ssid = "Sumit";
-  wifi_config.password = "sumit625";
+  bool checkConfig = checkConfigs(configKeys);
 
-  setupWiFi(wifi_config);
+  if (checkConfig)
+  {
+    Serial.println("Config found, using it");
+    wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
+    wifi_config.password = strdup(getKVStoreString("password").c_str());
+    config.address = strdup(getKVStoreString("address").c_str());
+    config.net = strdup(getKVStoreString("net").c_str());
+  }
+  else
+  {
+    Serial.println("Config not found, starting config server");
+    setupConfig();
 
-  config.address = "7LwsCzvPoJJD8d15yiH9D411RPpQJTb3QTePR7HgBQKH";
-  config.net = "devnet";
+    Serial.println("settings the parameters after getting config");
+    wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
+    wifi_config.password = strdup(getKVStoreString("password").c_str());
+    config.address = strdup(getKVStoreString("address").c_str());
+    config.net = strdup(getKVStoreString("net").c_str());
+  }
+
+  Serial.println(wifi_config.ssid);
+  Serial.println(wifi_config.password);
+
+  bool wifiConnected = setupWiFi(wifi_config);
+  while (!wifiConnected)
+  {
+    setupConfig();
+
+    Serial.println("executing this line, which should not be");
+    wifi_config.ssid = getKVStoreString("ssid").c_str();
+    wifi_config.password = getKVStoreString("password").c_str();
+
+    wifiConnected = setupWiFi(wifi_config);
+  }
 
   initWebSocket(config);
+
+  // memory cleanup :') i am missing rust T_T
+  free((void*)wifi_config.ssid);
+  free((void*)wifi_config.password);
+  free((void*)config.address);
+  free((void*)config.net);
 }
 
-void loop() {
+void loop()
+{
   handleWebSocket();
   delay(10);
 }
