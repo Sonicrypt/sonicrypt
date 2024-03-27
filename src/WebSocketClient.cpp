@@ -4,9 +4,9 @@
 
 using namespace websockets;
 
-char* wsEndpoint;
-char* net;
-char* address;
+const char* wsEndpoint;
+const char* net;
+const char* address;
 const char* wsPath = "/";
 const int wsPort = 80;
 int finalizeSub;
@@ -15,7 +15,7 @@ int confirmSub;
 WebsocketsClient client;
 HTTPClient http;
 
-char* getWsEndpoint(char* net) {
+char* getWsEndpoint(const char* net) {
     if (strcmp(net, "devnet") == 0) {
         return "api.devnet.solana.com";
     } else if (strcmp(net, "testnet") == 0) {
@@ -27,7 +27,7 @@ char* getWsEndpoint(char* net) {
     }
 }
 
-char* getHttpEndpoint(char* net) {
+char* getHttpEndpoint(const char* net) {
     if (strcmp(net, "devnet") == 0) {
         return "http://api.devnet.solana.com";
     } else if (strcmp(net, "testnet") == 0) {
@@ -117,7 +117,7 @@ void parseTx(String json) {
 
 void initWebSocket(Config config) {
     wsEndpoint = getWsEndpoint(config.net);
-    address = config.address;
+    address = config.address; // Change the type of 'address' from 'char*' to 'const char*'
     net = config.net;
 
     notifyConfirmation();
