@@ -3,6 +3,6 @@
 
 #include "Config.h"
 
-void setupWiFi(WifiConfig wifi_config);
+bool setupWiFi(WifiConfig wifi_config);
 
 #endif
