@@ -8,6 +8,7 @@ int retries = 0;
 const int max_retries = 5;
 
 bool setupWiFi(WifiConfig wifi_config) {
+  retries = 0;
   ssid = wifi_config.ssid;
   password = wifi_config.password;
 
@@ -15,7 +16,7 @@ bool setupWiFi(WifiConfig wifi_config) {
   while (WiFi.status() != WL_CONNECTED && retries <= max_retries) {
     delay(1000);
     Serial.print("Connecting to WiFi...");
-    Serial.println(retries);
+    Serial.println(retries + 1);
     retries++;
   }
 
