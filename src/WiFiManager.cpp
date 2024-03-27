@@ -1,17 +1,27 @@
 #include <WiFi.h>
 #include "WiFiManager.h"
+#include "BLEManager.h"
 
 const char* ssid;
 const char* password;
+int retries = 0;
+const int max_retries = 5;
 
-void setupWiFi(WifiConfig wifie_config) {
-  ssid = wifie_config.ssid;
-  password = wifie_config.password;
+bool setupWiFi(WifiConfig wifi_config) {
+  ssid = wifi_config.ssid;
+  password = wifi_config.password;
 
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED && retries <= max_retries) {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    Serial.print("Connecting to WiFi...");
+    Serial.println(retries);
+    retries++;
   }
-  Serial.println("Connected to WiFi");
+
+  if (retries > max_retries) {
+    Serial.println("Failed to connect to WiFi");
+    return false;
+  }
+  return true;
 }
