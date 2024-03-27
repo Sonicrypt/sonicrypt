@@ -35,24 +35,19 @@ void setup()
     Serial.println("Config not found, starting config server");
     setupConfig();
 
-    Serial.println("settings the parameters after getting config");
     wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
     wifi_config.password = strdup(getKVStoreString("password").c_str());
     config.address = strdup(getKVStoreString("address").c_str());
     config.net = strdup(getKVStoreString("net").c_str());
   }
 
-  Serial.println(wifi_config.ssid);
-  Serial.println(wifi_config.password);
-
   bool wifiConnected = setupWiFi(wifi_config);
   while (!wifiConnected)
   {
     setupConfig();
 
-    Serial.println("executing this line, which should not be");
-    wifi_config.ssid = getKVStoreString("ssid").c_str();
-    wifi_config.password = getKVStoreString("password").c_str();
+    wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
+    wifi_config.password = strdup(getKVStoreString("password").c_str());
 
     wifiConnected = setupWiFi(wifi_config);
   }
