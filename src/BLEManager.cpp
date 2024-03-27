@@ -177,4 +177,5 @@ void setupConfig() {
   }
   
   BLEDevice::deinit();
+  isConfigComplete = false;
 }
