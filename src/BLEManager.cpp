@@ -2,6 +2,7 @@
 #include "BLEManager.h"
 #include "KVStore.h"
 #include "Notify.h"
+#include "ArduinoJson.h"
 
 BLEServer *pServer = NULL;
 bool isConfigComplete = false; // Flag to track if all config keys are received
@@ -16,7 +17,7 @@ String configData;
 BLECharacteristic *message_characteristic = NULL;
 BLECharacteristic *box_characteristic = NULL;
 
-void processConfig(char startChar, char endChar, char delimiter, char keyValSplitChar, std::vector<std::string> configKeys);
+void processConfig();
 void storeConfig(String message);
 
 class MyServerCallbacks : public BLEServerCallbacks
@@ -132,63 +133,35 @@ void storeConfig(String message)
 
       // Process the configData
       Serial.println(configData);
-      processConfig(startChar, endChar, delimiter, keyValSplitChar, configKeys);
+      processConfig();
       configData = "";
     }
   }
 }
 
-void processConfig(char startChar, char endChar, char delimiter, char keyValSplitChar, std::vector<std::string> configKeys)
+void processConfig()
 {
-  // Remove the curly braces from configData
-  configData.remove(0, 1);                    // Remove the first character '{'
-  configData.remove(configData.length() - 1); // Remove the last character '}'
+  JsonDocument doc;
+  const char *jsonChar = configData.c_str();
+  DeserializationError err = deserializeJson(doc, jsonChar);
 
-  // Split the configData into individual key-value pairs based on the delimiter ';'
-  int separatorIndex;
-  int prevSeparatorIndex = -1;
-
-  while ((separatorIndex = configData.indexOf(delimiter, prevSeparatorIndex + 1)) != -1)
+  if (err)
   {
-    String pair = configData.substring(prevSeparatorIndex + 1, separatorIndex);
+    Serial.print("Error parsing JSON: ");
+    Serial.println(err.c_str());
+    notifyError();
+    return;
+  }
 
-    // Split the key-value pair into key and value based on the delimiter ':'
-    int colonIndex = pair.indexOf(keyValSplitChar);
+  // store in KV store
+  for (JsonPair kv : doc.as<JsonObject>())
+  {
+    Serial.print("Key: ");
+    Serial.println(kv.key().c_str());
 
-    if (colonIndex != -1)
-    {
-      String key = pair.substring(0, colonIndex);
-      String value = pair.substring(colonIndex + 1);
-
-      // if the key is in configKeys vector, store the key-value pair in the key-value store
-      if (std::find(configKeys.begin(), configKeys.end(), key.c_str()) != configKeys.end())
-      {
-        Serial.print("Key: ");
-        Serial.println(key);
-        Serial.print("Value: ");
-        Serial.println(value);
-
-        // Store the key-value pair in the key-value store
-        Serial.println("Storing key-value pair in key-value store");
-        putKVStoreString(key.c_str(), value.c_str());
-      }
-      else
-      {
-        // Error handling if the key is not in configKeys vector
-        Serial.println("Invalid key");
-        Serial.print("Key: ");
-        Serial.println(key);
-        Serial.print("Value: ");
-        Serial.println(value);
-      }
-    }
-    else
-    {
-      // Error handling if delimiter ':' is not found
-      Serial.println("Invalid key-value pair format");
-    }
-
-    prevSeparatorIndex = separatorIndex;
+    Serial.print("Value: ");
+    Serial.println(kv.value().as<String>().c_str());
+    putKVStoreString(kv.key().c_str(), kv.value().as<String>().c_str());
   }
 }
 
