@@ -11,14 +11,25 @@ Config config;
 WifiConfig wifi_config;
 std::vector<std::string> configKeys = {"ssid", "password", "net", "address"};
 
+bool bleOn = false;
+
+void handleConfig();
+
 void setup()
 {
   Serial.begin(115200);
   initKVStore();
 
+  putKVStoreString("ssid", "ssid"); //fake ssid for testing
+
+  // output pins
   pinMode(CONFIRM_LED_PIN, OUTPUT);
   pinMode(FINALIZE_LED_PIN, OUTPUT);
   pinMode(ERROR_LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // input pints
+  pinMode(BLE_PUSH_BUTTON_PIN, INPUT_PULLUP);
 
   bool checkConfig = checkConfigs(configKeys);
 
@@ -33,8 +44,8 @@ void setup()
   else
   {
     Serial.println("Config not found, starting config server");
-    setupConfig();
-
+    handleConfig();
+    
     wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
     wifi_config.password = strdup(getKVStoreString("password").c_str());
     config.address = strdup(getKVStoreString("address").c_str());
@@ -44,7 +55,8 @@ void setup()
   bool wifiConnected = setupWiFi(wifi_config);
   while (!wifiConnected)
   {
-    setupConfig();
+    Serial.println("WiFi not connected, retrying");
+    handleConfig();
 
     wifi_config.ssid = strdup(getKVStoreString("ssid").c_str());
     wifi_config.password = strdup(getKVStoreString("password").c_str());
@@ -64,5 +76,40 @@ void setup()
 void loop()
 {
   handleWebSocket();
+
+  // toggle ble based on input
+  if (digitalRead(BLE_PUSH_BUTTON_PIN) == LOW)
+  {
+    if (!bleOn)
+    {
+      setupBLE();
+      notifyBLEOn();
+      bleOn = true;
+    }
+  }
+  else
+  {
+    if (bleOn)
+    {
+      disconnectBLE();
+      bleOn = false;
+    }
+  }
+
   delay(10);
+}
+
+void handleConfig()
+{
+  setupBLE();
+
+  bool got = gotConfig();
+  while (!got) {
+    checkToReconnect();
+    got = gotConfig();
+    delay(100);
+  }
+
+  disconnectBLE();
+  setConfigComplete(false);
 }
