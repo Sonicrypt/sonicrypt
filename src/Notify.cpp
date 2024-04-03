@@ -27,8 +27,10 @@ void notifyBLEConnected() {
 void notifyConfirmation() {
     for (int i = 0; i < 3; i++) {
         digitalWrite(CONFIRM_LED_PIN, HIGH);
+        digitalWrite(FINALIZE_LED_PIN, HIGH);
         delay(100);
         digitalWrite(CONFIRM_LED_PIN, LOW);
+        digitalWrite(FINALIZE_LED_PIN, LOW);
         delay(100);
     }
 }
@@ -43,7 +45,7 @@ void notifyError() {
 }
 
 void notifyFinalization() {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         digitalWrite(FINALIZE_LED_PIN, HIGH);
         delay(100);
         digitalWrite(FINALIZE_LED_PIN, LOW);
@@ -54,5 +56,7 @@ void notifyFinalization() {
         delay(200);
         digitalWrite(FINALIZE_LED_PIN, HIGH);
         delay(100);
+        digitalWrite(FINALIZE_LED_PIN, LOW);
+        delay(200);
     }
 }
