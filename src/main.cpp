@@ -63,12 +63,6 @@ void setup()
   }
 
   initWebSocket(config);
-
-  // memory cleanup :') i am missing rust T_T
-  free((void*)wifi_config.ssid);
-  free((void*)wifi_config.password);
-  free((void*)config.address);
-  free((void*)config.net);
 }
 
 void loop()
