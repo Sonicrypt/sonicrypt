@@ -20,8 +20,6 @@ void setup()
   Serial.begin(115200);
   initKVStore();
 
-  putKVStoreString("ssid", "ssid"); //fake ssid for testing
-
   // output pins
   pinMode(CONFIRM_LED_PIN, OUTPUT);
   pinMode(FINALIZE_LED_PIN, OUTPUT);
